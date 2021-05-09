@@ -14,36 +14,66 @@
       Ensure: Present
     loop:
     - Web-Server
+    - Web-ASP
+    - Web-CGI
+    - Web-ISAPI-Ext
+    - Web-ISAPI-Filter
+    - Web-Includes
+    - Web-HTTP-Errors
+    - Web-Common-HTTP
+    - Web-Performance
+    - WAS
 
   - name: Make surgery web directory
-    file:
+    win_file:
       state: directory
       path: c:\surgeryweb
 
-  - name: Check out surgery repo
-    git:
+  - name: load surgery repo
+    win_copy:
       dest: c:\surgeryweb
-      repo: //vboxsrv/vagrant
+      src: vbsrc/
 
-  - name: Create new website
+  - name: Allow IIS to read repo
+    win_acl:
+      path: c:\surgeryweb
+      user: IIS_IUSRS
+      type: Allow
+      state: present
+      rights: ReadAndExecute,ListDirectory,Read
+      propogation: InheritOnly
+
+  - name: Create surgery website
     win_dsc:
       resource_name: xWebsite
       Name: Default Web Site
       State: Started
-      PhysicalPath: C:\vbsrc
+      PhysicalPath: C:\surgeryweb
       BindingInfo:
-      # - Protocol: https
-      #   Port: 8443
-      #   CertificateStoreName: My
-      #   CertificateThumbprint: C676A89018C4D5902353545343634F35E6B3A659
-      #   HostName: DSCTest
-      #   IPAddress: '*'
-      #   SSLFlags: 1
       - Protocol: http
         Port: 80
         IPAddress: '*'
       AuthenticationInfo:
-        Anonymous: no
+        Anonymous: yes
         Basic: yes
         Digest: no
         Windows: yes
+  - name: Share website directory
+    ansible.windows.win_share:
+      name: surgery
+      description: surgery website
+      path: c:\surgeryweb
+      full: vagrant
+- name: Configure Surgery DB Server
+  hosts: surgeryDB
+  tasks:
+  - name: Install SqlServerDsc module
+    win_psmodule:
+      name: SqlServerDsc
+      state: present
+  - name: Configure SQL Server to listen over TCP
+    win_dsc:
+      resource_name: SqlProtocol
+      Enabled: true
+      InstanceName: MSSQLSERVER
+      ProtocolName: TcpIp
