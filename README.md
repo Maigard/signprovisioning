@@ -9,5 +9,6 @@ This is a small start to building a dev environment for sign.
     1. create the venv - `python -m venv /path/to/new/virtual/environment`
     1. activate the environment - `. /path/to/new/virtual/environment/bin/activate`
     1. install ansible with pip - `pip install ansible`
+    1. install winrm with pip - `pip install winrm`. I ran into problems on Catalina and had to install six as well `pip install six`
 1. start the systems - `vagrant up`
 1. mount the web environment \\\\signWeb\surgery
